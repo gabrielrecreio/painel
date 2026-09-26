@@ -108,9 +108,10 @@ export default function MediaList({ videos, banners, loading, onDelete }) {
                   <td>
                     {f.kind === 'image' ? (
                       <img
-                        src={f.url}
+                        src={f.url.includes('res.cloudinary.com') ? f.url.replace('/upload/', '/upload/w_100,q_auto,f_auto/') : f.url}
                         alt={f.name}
                         className="h-8 w-14 object-cover rounded border border-white/10"
+                        loading="lazy"
                       />
                     ) : (
                       <YoutubeThumb videoId={f.url} />

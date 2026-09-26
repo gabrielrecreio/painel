@@ -43,7 +43,13 @@ export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight 
     )
   }
 
-  const current = banners[currentIndex % banners.length]
+  // Otimiza a URL do Cloudinary para economizar drásticamente a banda
+  const optimizeCloudinaryUrl = (url) => {
+    if (url && url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+      return url.replace('/upload/', '/upload/q_auto,f_auto,w_1080/')
+    }
+    return url
+  }
 
   return (
     <div
@@ -53,12 +59,23 @@ export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight 
         : { aspectRatio: '2/1', width: '100%' }
       }
     >
-      <img
-        src={current.url}
-        alt={current.name}
-        className="banner-slide absolute inset-0 w-full h-full"
-        style={{ opacity: visible ? 1 : 0, objectFit: 'contain' }}
-      />
+      {/* 
+        Renderiza TODOS os banners no DOM para que o navegador baixe apenas 1 vez e mantenha em cache,
+        alterando apenas a opacidade do banner ativo. Isso zera o consumo repetitivo de banda.
+      */}
+      {banners.map((banner, i) => (
+        <img
+          key={banner.id || i}
+          src={optimizeCloudinaryUrl(banner.url)}
+          alt={banner.name || 'Banner'}
+          className="banner-slide absolute inset-0 w-full h-full transition-opacity duration-700"
+          style={{
+            opacity: i === currentIndex && visible ? 1 : 0,
+            objectFit: 'contain',
+            pointerEvents: i === currentIndex ? 'auto' : 'none'
+          }}
+        />
+      ))}
 
       {/* Dot indicators */}
       {banners.length > 1 && (
