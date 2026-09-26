@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-export default function BannerSlider({ banners, intervalSeconds = 5 }) {
+export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight = false }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [visible, setVisible] = useState(true)
   const timerRef = useRef(null)
@@ -48,7 +48,10 @@ export default function BannerSlider({ banners, intervalSeconds = 5 }) {
   return (
     <div
       className="relative rounded-xl overflow-hidden border border-white/5 bg-black shrink-0"
-      style={{ aspectRatio: '2/1', width: '100%' }}
+      style={fillHeight
+        ? { width: '100%', height: '100%' }
+        : { aspectRatio: '2/1', width: '100%' }
+      }
     >
       <img
         src={current.url}

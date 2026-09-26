@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
  * Reproduz vídeos do YouTube em loop via iframe embed.
  * `videos` é um array de objetos { id, name, url } onde `url` é o YouTube videoId.
  */
-export default function VideoPlayer({ videos }) {
+export default function VideoPlayer({ videos, fillHeight = false }) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   // Reset index quando a lista mudar
@@ -14,11 +14,15 @@ export default function VideoPlayer({ videos }) {
     }
   }, [videos, currentIndex])
 
+  const containerStyle = fillHeight
+    ? { width: '100%', height: '100%' }
+    : { aspectRatio: '21/9' }
+
   if (videos.length === 0) {
     return (
       <div
         className="video-container flex items-center justify-center"
-        style={{ aspectRatio: '16/9' }}
+        style={containerStyle}
       >
         <div className="flex flex-col items-center gap-3 text-gb-charcoal-4">
           <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +51,7 @@ export default function VideoPlayer({ videos }) {
     `&controls=0&rel=0&modestbranding=1&playsinline=1`
 
   return (
-    <div className="video-container relative" style={{ aspectRatio: '21/9' }}>
+    <div className="video-container relative" style={containerStyle}>
       <iframe
         key={videoId}
         src={embedUrl}

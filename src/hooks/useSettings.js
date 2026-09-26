@@ -10,8 +10,8 @@ export function useSettings() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchSettings = useCallback(async () => {
-    setLoading(true)
+  const fetchSettings = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true)
     setError(null)
     const { data, error: err } = await supabase
       .from('settings')
@@ -25,11 +25,11 @@ export function useSettings() {
       })
       setSettings(settingsObj)
     }
-    setLoading(false)
+    if (isInitial) setLoading(false)
   }, [])
 
   useEffect(() => {
-    fetchSettings()
+    fetchSettings(true)
 
     // Realtime subscription
     const channel = supabase
@@ -37,7 +37,7 @@ export function useSettings() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'settings' },
-        () => fetchSettings()
+        () => fetchSettings(false)
       )
       .subscribe()
 

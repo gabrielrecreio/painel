@@ -67,23 +67,14 @@ body {
 .tv-portrait-root {
   position: fixed;
   top: 0;
-  left: 100vw;    /* ancora no canto superior-direito da tela */
-  /* Dimensões portrait: largura = altura da tela landscape, altura = largura da tela landscape */
+  left: 100vw;
   width: 100vh;
   height: 100vw;
-  /* Rotaciona +90° (sentido horário) a partir do canto superior-esquerdo do elemento */
   transform-origin: top left;
   transform: rotate(90deg);
   overflow: hidden;
   background: #111111;
   user-select: none;
-
-  /* Layout interno em coluna */
-  display: flex;
-  flex-direction: column;
-  /* Dentro do elemento rotacionado: vh = largura portrait, vw = altura portrait */
-  padding: clamp(8px, 2vh, 20px) clamp(10px, 2.5vh, 24px);
-  gap: clamp(5px, 1.2vh, 12px);
   box-sizing: border-box;
 }
 
@@ -568,4 +559,64 @@ body {
   background: #3e0000;
   border: 1px solid #d32f2f;
   color: #ef9a9a;
+}
+
+/* =========================================================
+   RESPONSIVO PARA MOBILE NA ROTA /tv
+   Caso alguém abra a TV pelo celular, não usar rotate() 
+   e empilhar os widgets verticalmente.
+========================================================= */
+@media (max-width: 1024px) and (orientation: portrait), (max-width: 768px) {
+  .tv-portrait-root {
+    position: static;
+    left: auto;
+    top: auto;
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 20px;
+    background: #111;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Faz os widgets ficarem no fluxo do flexbox em vez de absolutos */
+  .tv-portrait-root .tv-widget {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .tv-widget-divider {
+    display: none !important;
+  }
+
+  /* Força a proporção correta para o vídeo e banners (para não sumirem com height:auto) */
+  .tv-widget-video {
+    aspect-ratio: 16/9;
+  }
+  
+  .tv-widget-banner {
+    aspect-ratio: 1080/380;
+  }
+  .tv-widget-banner > div {
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Ajusta as fontes pra não dependerem de vh (pois vh no cel em portrait é enorme) */
+  .tv-p-time { font-size: 50px !important; }
+  .tv-p-sec { font-size: 20px !important; }
+  .tv-p-date { font-size: 14px !important; }
+  
+  .tv-p-logo { width: 50px !important; height: 50px !important; }
+  .tv-p-brand-name { font-size: 24px !important; }
+  .tv-p-brand-sub { font-size: 12px !important; }
 }

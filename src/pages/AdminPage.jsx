@@ -7,6 +7,7 @@ import ClassForm from '../components/admin/ClassForm'
 import ClassList from '../components/admin/ClassList'
 import MediaUpload from '../components/admin/MediaUpload'
 import MediaList from '../components/admin/MediaList'
+import LayoutEditor, { DEFAULT_LAYOUT } from '../components/admin/LayoutEditor'
 
 // ===== TOAST =====
 function Toast({ msg, type, onClose }) {
@@ -41,10 +42,27 @@ function getBannerInterval() {
 export default function AdminPage() {
   const { classes, loading: classLoading, addClass, deleteClass } = useClasses()
   const { videos, banners, loading: mediaLoading, uploadImage, addVideo, deleteMedia } = useMedia()
-  const { settings, updateSetting } = useSettings()
+  const { settings, loading: settingsLoading, updateSetting } = useSettings()
   const { toast, show: showToast, hide: hideToast } = useToast()
   const { signOut, session } = useAuth()
   const [bannerInterval, setBannerInterval] = useState(getBannerInterval())
+  const [activeTab, setActiveTab] = useState('schedule') // 'schedule' | 'media' | 'layout'
+  const [layoutSaving, setLayoutSaving] = useState(false)
+
+  // Lê o layout salvo ou usa o padrão
+  const savedLayout = settings.tv_layout ? JSON.parse(settings.tv_layout) : DEFAULT_LAYOUT
+
+  const handleSaveLayout = async (layout) => {
+    setLayoutSaving(true)
+    try {
+      await updateSetting('tv_layout', JSON.stringify(layout))
+      showToast('Layout da TV salvo com sucesso! ✓')
+    } catch (err) {
+      showToast(`Erro ao salvar layout: ${err.message}`, 'error')
+    } finally {
+      setLayoutSaving(false)
+    }
+  }
 
   const handleAddClass = async (formData) => {
     try {
@@ -106,6 +124,12 @@ export default function AdminPage() {
     }
   }
 
+  const TABS = [
+    { id: 'schedule', label: 'Grade Horária', icon: '📅' },
+    { id: 'media',    label: 'Mídias',        icon: '🎬' },
+    { id: 'layout',   label: 'Layout da TV',  icon: '🖥️' },
+  ]
+
   return (
     <div className="admin-root">
       {/* ===== HEADER ===== */}
@@ -165,11 +189,31 @@ export default function AdminPage() {
         </div>
       </header>
 
+      {/* ===== TABS NAV ===== */}
+      <div className="border-b border-white/5 sticky top-[73px] z-40" style={{ background: 'rgba(26,26,26,0.95)', backdropFilter: 'blur(12px)' }}>
+        <div className="max-w-7xl mx-auto px-6 flex gap-1">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all border-b-2"
+              style={{
+                borderBottomColor: activeTab === tab.id ? '#e53935' : 'transparent',
+                color: activeTab === tab.id ? '#ffffff' : '#666',
+              }}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ===== MAIN ===== */}
       <main className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-10">
 
         {/* ===== SECTION: AULAS ===== */}
-        <section>
+        <section style={{ display: activeTab === 'schedule' ? 'block' : 'none' }}>
           <div className="mb-4 flex items-center gap-3">
             <div className="gb-divider flex-1" style={{ margin: 0 }} />
             <h2 className="font-rajdhani font-bold text-xl text-white tracking-widest uppercase shrink-0">
@@ -215,7 +259,7 @@ export default function AdminPage() {
         </section>
 
         {/* ===== SECTION: MÍDIAS ===== */}
-        <section>
+        <section style={{ display: activeTab === 'media' ? 'block' : 'none' }}>
           <div className="mb-4 flex items-center gap-3">
             <div className="gb-divider flex-1" style={{ margin: 0 }} />
             <h2 className="font-rajdhani font-bold text-xl text-white tracking-widest uppercase shrink-0">
@@ -260,6 +304,28 @@ export default function AdminPage() {
               onDelete={handleDeleteMedia}
             />
           </div>
+        </section>
+
+        {/* ===== SECTION: LAYOUT ===== */}
+        <section style={{ display: activeTab === 'layout' ? 'block' : 'none' }}>
+          <div className="mb-6 flex items-center gap-3">
+            <div className="gb-divider flex-1" style={{ margin: 0 }} />
+            <h2 className="font-rajdhani font-bold text-xl text-white tracking-widest uppercase shrink-0">
+              Layout da TV
+            </h2>
+            <div className="gb-divider flex-1" style={{ margin: 0 }} />
+          </div>
+          {settingsLoading ? (
+            <div className="flex justify-center p-10">
+              <span className="text-gb-muted">Carregando layout...</span>
+            </div>
+          ) : activeTab === 'layout' ? (
+            <LayoutEditor
+              layout={savedLayout}
+              onSave={handleSaveLayout}
+              saving={layoutSaving}
+            />
+          ) : null}
         </section>
 
         {/* Footer */}
