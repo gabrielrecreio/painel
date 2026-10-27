@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { TV_REF_W, TV_REF_H } from '../../tvConstants'
 
 // Ordem e cor de destaque de cada bloco (ids vêm da API do GB Frequência)
@@ -13,7 +13,11 @@ const BELT_COLORS = {
   Green: '#43a047', Blue: '#1e88e5', Purple: '#8e24aa', Brown: '#795548', Black: '#111111',
 }
 
-const MAX_ROWS = 7
+// Acima disso a lista do bloco rola sozinha em vez de crescer
+const VISIBLE_ROWS = 6
+const ROW_GAP = 6 // igual ao gap do .rk-track no CSS
+const SCROLL_SPEED = 45 // px/s no canvas de 1080×1920
+const SCROLL_PAUSE = 0.15 // fração do ciclo parada no topo
 
 // "GreyWhite" / "YellowBlack" → cor base da faixa
 function beltColor(belt) {
@@ -57,12 +61,71 @@ function Avatar({ entry }) {
   )
 }
 
+function RankingRow({ entry, entries, i, copy }) {
+  const tied = entries.some(e => e !== entry && e.position === entry.position)
+  return (
+    <li
+      className={`rk-row rk-pos-${Math.min(entry.position, 4)}`}
+      style={{ '--i': Math.min(i, VISIBLE_ROWS) }}
+      aria-hidden={copy || undefined}
+    >
+      <span className="rk-medal font-rajdhani">{entry.position}º</span>
+      <Avatar entry={entry} />
+      <span className="rk-name">
+        <span className="rk-name-text">{entry.name}</span>
+        {tied && <span className="rk-tie font-rajdhani">empate</span>}
+      </span>
+      <span className="rk-count">
+        <b className="font-rajdhani">{entry.count}</b>
+        <small className="font-rajdhani">{entry.count === 1 ? 'presença' : 'presenças'}</small>
+      </span>
+    </li>
+  )
+}
+
+/**
+ * Lista do bloco. Se passar de VISIBLE_ROWS, a lista é duplicada e rola em loop
+ * (para no topo, desce até a cópia ficar no lugar da original e recomeça sem salto).
+ */
+function RankingList({ entries }) {
+  const viewportRef = useRef(null)
+  const [rowH, setRowH] = useState(0)
+  const scrolling = entries.length > VISIBLE_ROWS
+
+  useLayoutEffect(() => {
+    const el = viewportRef.current
+    if (!el || !scrolling) return
+    const measure = () => setRowH((el.offsetHeight - ROW_GAP * (VISIBLE_ROWS - 1)) / VISIBLE_ROWS)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [scrolling])
+
+  const distance = entries.length * (rowH + ROW_GAP)
+  const duration = distance / SCROLL_SPEED / (1 - SCROLL_PAUSE)
+
+  return (
+    <div ref={viewportRef} className={`rk-list ${scrolling ? 'is-scrolling' : ''}`}>
+      <ol
+        className="rk-track"
+        style={scrolling && rowH > 0 ? { '--row-h': `${rowH}px`, '--scroll': `-${distance}px`, '--scroll-dur': `${duration}s` } : undefined}
+      >
+        {entries.map((entry, i) => (
+          <RankingRow key={entry.studentId} entry={entry} entries={entries} i={i} />
+        ))}
+        {scrolling && entries.map((entry, i) => (
+          <RankingRow key={`${entry.studentId}-copy`} entry={entry} entries={entries} i={entries.length + i} copy />
+        ))}
+      </ol>
+    </div>
+  )
+}
+
 function RankingBlock({ group, index }) {
   const style = GROUP_STYLES[group.id] || GROUP_STYLES.adulto
-  const visible = group.entries.slice(0, MAX_ROWS)
-  const hidden = group.entries.length - visible.length
-  // Bloco com mais linhas (empates) ganha mais altura, mantendo as linhas do mesmo tamanho
-  const grow = Math.max(5, visible.length) + (hidden > 0 ? 0.5 : 0)
+  // Bloco com mais linhas (empates) ganha mais altura até VISIBLE_ROWS; depois disso rola
+  const grow = Math.min(Math.max(5, group.entries.length), VISIBLE_ROWS)
 
   return (
     <section className="rk-block" style={{ '--accent': style.accent, '--b': index, flexGrow: grow }}>
@@ -72,35 +135,10 @@ function RankingBlock({ group, index }) {
         <span className="rk-block-sub font-rajdhani">Top 5 do mês</span>
       </header>
 
-      {visible.length === 0 ? (
+      {group.entries.length === 0 ? (
         <div className="rk-empty font-rajdhani">Ninguém pontuou ainda neste mês. Bora treinar! 💪</div>
       ) : (
-        <ol className="rk-list">
-          {visible.map((entry, i) => {
-            const tied = group.entries.some(e => e !== entry && e.position === entry.position)
-            return (
-              <li
-                key={entry.studentId}
-                className={`rk-row rk-pos-${Math.min(entry.position, 4)}`}
-                style={{ '--i': i }}
-              >
-                <span className="rk-medal font-rajdhani">{entry.position}º</span>
-                <Avatar entry={entry} />
-                <span className="rk-name">
-                  <span className="rk-name-text">{entry.name}</span>
-                  {tied && <span className="rk-tie font-rajdhani">empate</span>}
-                </span>
-                <span className="rk-count">
-                  <b className="font-rajdhani">{entry.count}</b>
-                  <small className="font-rajdhani">{entry.count === 1 ? 'presença' : 'presenças'}</small>
-                </span>
-              </li>
-            )
-          })}
-          {hidden > 0 && (
-            <li className="rk-more font-rajdhani">+{hidden} {hidden === 1 ? 'aluno' : 'alunos'} no top 5</li>
-          )}
-        </ol>
+        <RankingList entries={group.entries} />
       )}
     </section>
   )
