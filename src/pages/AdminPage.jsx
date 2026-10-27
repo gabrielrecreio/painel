@@ -8,6 +8,8 @@ import ClassList from '../components/admin/ClassList'
 import MediaUpload from '../components/admin/MediaUpload'
 import MediaList from '../components/admin/MediaList'
 import LayoutEditor, { DEFAULT_LAYOUT } from '../components/admin/LayoutEditor'
+import RankingSettings from '../components/admin/RankingSettings'
+import { parseRankingConfig } from '../tvConstants'
 
 // ===== TOAST =====
 function Toast({ msg, type, onClose }) {
@@ -32,22 +34,32 @@ function useToast() {
   return { toast, show, hide }
 }
 
-// ===== BANNER INTERVAL SETTING =====
-const INTERVAL_KEY = 'gb_banner_interval'
-function getBannerInterval() {
-  const saved = localStorage.getItem(INTERVAL_KEY)
-  return saved ? parseInt(saved, 10) : 5
-}
-
 export default function AdminPage() {
   const { classes, loading: classLoading, addClass, deleteClass } = useClasses()
   const { videos, banners, loading: mediaLoading, uploadImage, addVideo, deleteMedia } = useMedia()
   const { settings, loading: settingsLoading, updateSetting } = useSettings()
   const { toast, show: showToast, hide: hideToast } = useToast()
   const { signOut, session } = useAuth()
-  const [bannerInterval, setBannerInterval] = useState(getBannerInterval())
-  const [activeTab, setActiveTab] = useState('schedule') // 'schedule' | 'media' | 'layout'
+  // Rascunho enquanto digita; salvo no Supabase ao sair do campo
+  const [bannerIntervalDraft, setBannerIntervalDraft] = useState(null)
+  const bannerInterval = bannerIntervalDraft ?? (parseInt(settings.banner_interval, 10) || 5)
+  const [activeTab, setActiveTab] = useState('schedule') // 'schedule' | 'media' | 'layout' | 'ranking'
   const [layoutSaving, setLayoutSaving] = useState(false)
+  const [rankingSaving, setRankingSaving] = useState(false)
+
+  const rankingConfig = parseRankingConfig(settings.ranking_config)
+
+  const handleSaveRanking = async (config) => {
+    setRankingSaving(true)
+    try {
+      await updateSetting('ranking_config', JSON.stringify(config))
+      showToast('Configuração do ranking salva! ✓')
+    } catch (err) {
+      showToast(`Erro ao salvar ranking: ${err.message}`, 'error')
+    } finally {
+      setRankingSaving(false)
+    }
+  }
 
   // Lê o layout salvo ou usa o padrão
   const savedLayout = settings.tv_layout ? JSON.parse(settings.tv_layout) : DEFAULT_LAYOUT
@@ -109,10 +121,17 @@ export default function AdminPage() {
     }
   }
 
-  const handleIntervalChange = (val) => {
-    const n = Math.max(1, Math.min(60, parseInt(val, 10) || 5))
-    setBannerInterval(n)
-    localStorage.setItem(INTERVAL_KEY, String(n))
+  const handleIntervalSave = async () => {
+    if (bannerIntervalDraft === null) return
+    const n = Math.max(1, Math.min(60, parseInt(bannerIntervalDraft, 10) || 5))
+    try {
+      await updateSetting('banner_interval', String(n))
+      showToast('Intervalo dos banners salvo! ✓')
+    } catch (err) {
+      showToast(`Erro ao salvar intervalo: ${err.message}`, 'error')
+    } finally {
+      setBannerIntervalDraft(null)
+    }
   }
 
   const handleHolidayChange = async (val) => {
@@ -128,6 +147,7 @@ export default function AdminPage() {
     { id: 'schedule', label: 'Grade Horária', icon: '📅' },
     { id: 'media',    label: 'Mídias',        icon: '🎬' },
     { id: 'layout',   label: 'Layout da TV',  icon: '🖥️' },
+    { id: 'ranking',  label: 'Ranking',       icon: '🏆' },
   ]
 
   return (
@@ -283,12 +303,14 @@ export default function AdminPage() {
               min={1}
               max={60}
               value={bannerInterval}
-              onChange={(e) => handleIntervalChange(e.target.value)}
+              onChange={(e) => setBannerIntervalDraft(e.target.value)}
+              onBlur={handleIntervalSave}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
               className="gb-input"
               style={{ maxWidth: 100 }}
             />
             <p className="text-xs text-gb-charcoal-4">
-              Salvo automaticamente no navegador. Recarregue o painel /tv para aplicar.
+              Salvo ao sair do campo e aplicado na TV automaticamente.
             </p>
           </div>
 
@@ -326,6 +348,29 @@ export default function AdminPage() {
               saving={layoutSaving}
             />
           ) : null}
+        </section>
+
+        {/* ===== SECTION: RANKING ===== */}
+        <section style={{ display: activeTab === 'ranking' ? 'block' : 'none' }}>
+          <div className="mb-6 flex items-center gap-3">
+            <div className="gb-divider flex-1" style={{ margin: 0 }} />
+            <h2 className="font-rajdhani font-bold text-xl text-white tracking-widest uppercase shrink-0">
+              Ranking
+            </h2>
+            <div className="gb-divider flex-1" style={{ margin: 0 }} />
+          </div>
+          {settingsLoading ? (
+            <div className="flex justify-center p-10">
+              <span className="text-gb-muted">Carregando configurações...</span>
+            </div>
+          ) : (
+            <RankingSettings
+              key={settings.ranking_config || 'default'}
+              config={rankingConfig}
+              onSave={handleSaveRanking}
+              saving={rankingSaving}
+            />
+          )}
         </section>
 
         {/* Footer */}

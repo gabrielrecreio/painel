@@ -10,3 +10,19 @@ export const DEFAULT_LAYOUT = {
   video:    { x: 0, y: 1040, w: 1080, h: 460 },
   banner:   { x: 0, y: 1510, w: 1080, h: 380 },
 }
+
+// Ranking de presenças: tempo na tela normal antes de girar e tempo exibindo o ranking
+export const DEFAULT_RANKING_CONFIG = {
+  enabled: true,
+  intervalMinutes: 5,
+  displaySeconds: 90,
+}
+
+export function parseRankingConfig(value) {
+  try {
+    const parsed = value ? JSON.parse(value) : {}
+    return { ...DEFAULT_RANKING_CONFIG, ...parsed }
+  } catch {
+    return DEFAULT_RANKING_CONFIG
+  }
+}

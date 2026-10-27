@@ -2,10 +2,13 @@ import { useState, useEffect, Component } from 'react'
 import { useClasses } from '../hooks/useClasses'
 import { useMedia } from '../hooks/useMedia'
 import { useTvLayout } from '../hooks/useTvLayout'
+import { useSettings } from '../hooks/useSettings'
+import { useRanking, useRankingCycle } from '../hooks/useRanking'
 import ScheduleTable from '../components/tv/ScheduleTable'
 import VideoPlayer from '../components/tv/VideoPlayer'
 import BannerSlider from '../components/tv/BannerSlider'
-import { DEFAULT_LAYOUT, TV_REF_W, TV_REF_H } from '../tvConstants'
+import RankingScreen from '../components/tv/RankingScreen'
+import { DEFAULT_LAYOUT, TV_REF_W, TV_REF_H, parseRankingConfig } from '../tvConstants'
 
 /* ── Error Boundary para evitar tela preta em caso de crash ── */
 class ErrorBoundary extends Component {
@@ -24,12 +27,6 @@ class ErrorBoundary extends Component {
     }
     return this.props.children
   }
-}
-
-const INTERVAL_KEY = 'gb_banner_interval'
-function getBannerInterval() {
-  const saved = localStorage.getItem(INTERVAL_KEY)
-  return saved ? parseInt(saved, 10) : 5
 }
 
 function getGBWeek() {
@@ -116,8 +113,17 @@ export default function TvPage() {
   const { classes, loading: classLoading } = useClasses()
   const { videos, banners } = useMedia()
   const layout = useTvLayout()
-  const bannerInterval = getBannerInterval()
+  const { settings } = useSettings()
+  const bannerInterval = parseInt(settings.banner_interval, 10) || 5
   const currentWeek = getGBWeek()
+
+  // Ranking de presenças: /tv?ranking=1 deixa o ranking fixo para pré-visualizar
+  const rankingConfig = parseRankingConfig(settings.ranking_config)
+  const forceRanking = new URLSearchParams(window.location.search).get('ranking') === '1'
+  const ranking = useRanking(rankingConfig.enabled || forceRanking)
+  const rankingDue = useRankingCycle(rankingConfig, forceRanking)
+  const hasRanking = !!ranking?.groups?.some(g => g.entries.length > 0)
+  const showRanking = rankingDue && hasRanking
 
   const activeBanners = banners.filter(banner => {
     if (banner.semana) return banner.semana === currentWeek
@@ -127,6 +133,8 @@ export default function TvPage() {
   return (
     <ErrorBoundary>
     <div className="tv-portrait-root">
+    <div className={`tv-flipper ${showRanking ? 'is-flipped' : ''} ${forceRanking ? 'no-anim' : ''}`}>
+    <div className="tv-face tv-face-front">
 
       {/* ── Área 1: Cabeçalho ── */}
       <Widget className="tv-widget-header" pos={layout.header} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,1.5vh,16px)' }}>
@@ -196,6 +204,13 @@ export default function TvPage() {
         <BannerSlider banners={activeBanners} intervalSeconds={bannerInterval} fillHeight />
       </Widget>
 
+    </div>
+
+    {/* ── Verso: ranking de presenças do mês ── */}
+    <div className="tv-face tv-face-back">
+      {hasRanking && <RankingScreen ranking={ranking} active={showRanking} />}
+    </div>
+    </div>
     </div>
     </ErrorBoundary>
   )

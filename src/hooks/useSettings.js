@@ -31,9 +31,9 @@ export function useSettings() {
   useEffect(() => {
     fetchSettings(true)
 
-    // Realtime subscription
+    // Realtime com nome de canal único por instância (evita conflito ao montar duas vezes)
     const channel = supabase
-      .channel('settings-realtime')
+      .channel(`settings-realtime-${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'settings' },
