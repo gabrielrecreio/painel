@@ -98,7 +98,7 @@ function RankingBlock({ group, index }) {
             )
           })}
           {hidden > 0 && (
-            <li className="rk-more font-rajdhani">+{hidden} {hidden === 1 ? 'aluno empatado' : 'alunos empatados'}</li>
+            <li className="rk-more font-rajdhani">+{hidden} {hidden === 1 ? 'aluno' : 'alunos'} no top 5</li>
           )}
         </ol>
       )}
