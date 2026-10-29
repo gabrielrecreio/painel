@@ -49,8 +49,8 @@ function getGBWeek() {
   return (diffWeeks % 16) + 1
 }
 
-/* ── Relógio portrait ── */
-function ClockPortrait({ h }) {
+/* ── Topo: logo + relógio grande + bloco do dia (mesmo visual do header do ranking) ── */
+function TopBar({ w, h }) {
   const [time, setTime] = useState(new Date())
 
   useEffect(() => {
@@ -61,30 +61,27 @@ function ClockPortrait({ h }) {
   const hours   = String(time.getHours()).padStart(2, '0')
   const minutes = String(time.getMinutes()).padStart(2, '0')
   const seconds = String(time.getSeconds()).padStart(2, '0')
+  const month   = time.toLocaleDateString('pt-BR', { month: 'long' })
 
-  const dateStr = time.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day:     '2-digit',
-    month:   'long',
-    year:    'numeric',
-  })
-
-  // Escala fonte dinamicamente com a altura da área
-  const fs = Math.max(24, Math.min(96, h * 0.35))
+  // Tudo escala com a área: logo e bloco do dia pela altura, relógio pelo espaço que sobra no meio
+  const side = Math.min(h * 0.62, 190)
+  const fs = Math.max(48, Math.min(h * 0.72, (w - 2 * side - 120) / 3.1))
 
   return (
-    <div className="tv-p-clock-wrap" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="tv-p-topbar">
+      <img src="/logo.jpg" alt="GB Marajoara" className="tv-p-top-logo" style={{ width: side, height: side }} />
+
       <div className="tv-p-time font-rajdhani" style={{ fontSize: fs }}>
         <span className="tv-p-hhmm">
-          {hours}<span className="tv-p-colon text-gb-red">:</span>{minutes}
+          {hours}<span className="tv-p-colon">:</span>{minutes}
         </span>
-        <span className="tv-p-sec font-rajdhani" style={{ fontSize: fs * 0.38 }}>{seconds}</span>
+        <span className="tv-p-sec">{seconds}</span>
       </div>
-      <p className="tv-p-date font-inter capitalize" style={{ fontSize: Math.max(12, h * 0.09) }}>{dateStr}</p>
-      <style>{`
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
-        .tv-p-colon { animation: blink 1s step-end infinite; display: inline-block; }
-      `}</style>
+
+      <div className="tv-p-day font-rajdhani" style={{ minWidth: side, height: side }}>
+        <b style={{ fontSize: side * 0.5 }}>{time.getDate()}</b>
+        <small style={{ fontSize: Math.max(14, side * 0.15) }}>{month}</small>
+      </div>
     </div>
   )
 }
@@ -125,6 +122,14 @@ export default function TvPage() {
   const hasRanking = !!ranking?.groups?.some(g => g.entries.length > 0)
   const showRanking = rankingDue && hasRanking
 
+  // Retângulo que cobre o cabeçalho e o relógio do layout
+  const topArea = {
+    x: Math.min(layout.header.x, layout.clock.x),
+    y: Math.min(layout.header.y, layout.clock.y),
+    w: Math.max(layout.header.x + layout.header.w, layout.clock.x + layout.clock.w) - Math.min(layout.header.x, layout.clock.x),
+    h: Math.max(layout.header.y + layout.header.h, layout.clock.y + layout.clock.h) - Math.min(layout.header.y, layout.clock.y),
+  }
+
   const activeBanners = banners.filter(banner => {
     if (banner.semana) return banner.semana === currentWeek
     return true
@@ -136,33 +141,9 @@ export default function TvPage() {
     <div className={`tv-flipper ${showRanking ? 'is-flipped' : ''} ${forceRanking ? 'no-anim' : ''}`}>
     <div className="tv-face tv-face-front">
 
-      {/* ── Área 1: Cabeçalho ── */}
-      <Widget className="tv-widget-header" pos={layout.header} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(8px,1.5vh,16px)' }}>
-        <img
-          src="/logo.jpg"
-          alt="GB Marajoara"
-          className="tv-p-logo"
-          style={{ width: Math.min(layout.header.h * 0.7, 70), height: Math.min(layout.header.h * 0.7, 70) }}
-        />
-        <div>
-          <h1
-            className="tv-p-brand-name font-rajdhani"
-            style={{ fontSize: Math.max(18, layout.header.h * 0.38) }}
-          >
-            GB Marajoara
-          </h1>
-          <p
-            className="tv-p-brand-sub font-rajdhani"
-            style={{ fontSize: Math.max(9, layout.header.h * 0.13) }}
-          >
-            Gracie Barra · Jiu-Jitsu
-          </p>
-        </div>
-      </Widget>
-
-      {/* ── Área 2: Relógio ── */}
-      <Widget className="tv-widget-clock" pos={layout.clock}>
-        <ClockPortrait h={layout.clock.h} />
+      {/* ── Áreas 1 e 2: Cabeçalho + Relógio numa barra só, ocupando o espaço das duas ── */}
+      <Widget className="tv-widget-top" pos={topArea}>
+        <TopBar w={topArea.w} h={topArea.h} />
       </Widget>
 
       {/* ── Divisor entre relógio e grade ── */}

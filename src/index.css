@@ -78,75 +78,79 @@ body {
   box-sizing: border-box;
 }
 
-/* ── Header: logo + nome ── */
-.tv-p-header {
+/* ── Topo: logo + relógio + bloco do dia (mesmo visual do header do ranking) ── */
+.tv-p-topbar {
+  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;   /* centraliza logo + nome horizontalmente */
-  gap: clamp(10px, 2vh, 18px);
-  flex-shrink: 0;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 0 36px;
 }
 
-.tv-p-logo {
-  width:  clamp(40px, 7vh, 70px);
-  height: clamp(40px, 7vh, 70px);
-  border-radius: 10px;
+.tv-p-top-logo {
+  flex-shrink: 0;
+  border-radius: 22px;
   object-fit: contain;
-  flex-shrink: 0;
-}
-
-.tv-p-brand-name {
-  font-weight: 900;
-  color: #ffffff;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  font-size: clamp(1.4rem, 5vh, 3.2rem);
-}
-
-.tv-p-brand-sub {
-  color: #d32f2f;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: clamp(0.55rem, 1.5vh, 0.9rem);
-}
-
-/* ── Relógio ── */
-.tv-p-clock-wrap {
-  flex-shrink: 0;
-  text-align: center;
-  padding: clamp(2px, 0.6vh, 8px) 0;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.6), 0 10px 40px rgba(211, 47, 47, 0.35);
 }
 
 .tv-p-time {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.1em;
+  gap: 0.06em;
   line-height: 1;
   color: #ffffff;
   font-weight: 700;
 }
 
 .tv-p-hhmm {
-  /* ~13% da largura portrait = 13vh */
-  font-size: clamp(3rem, 13vh, 6.5rem);
   letter-spacing: -0.02em;
 }
 
-.tv-p-sec {
-  font-size: clamp(1.2rem, 4vh, 2.2rem);
-  color: #555;
-  font-weight: 600;
-  align-self: flex-end;
-  margin-bottom: 0.18em;
+.tv-p-colon {
+  display: inline-block;
+  color: #d32f2f;
+  animation: tvBlink 1s step-end infinite;
 }
 
-.tv-p-date {
-  color: #9e9e9e;
-  font-size: clamp(0.7rem, 2vh, 1.1rem);
-  font-weight: 500;
-  margin-top: clamp(2px, 0.4vh, 6px);
+.tv-p-sec {
+  font-size: 0.3em;
+  color: #6b6b6b;
+  font-weight: 600;
+  width: 1.2em;
+}
+
+@keyframes tvBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+.tv-p-day {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #d32f2f, #7f1010);
+  box-shadow: 0 10px 30px rgba(211, 47, 47, 0.4);
+  color: #fff;
+  text-align: center;
+}
+.tv-p-day b {
+  line-height: 0.9;
+  font-weight: 700;
+}
+.tv-p-day small {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
 }
 
 /* ── Schedule: expande para ocupar o espaço disponível ── */
@@ -217,28 +221,27 @@ body {
     gap: 10px;
   }
 
-  /* ── Relógio: usa vw (largura real do celular) ── */
-  .tv-p-hhmm {
-    font-size: clamp(3.5rem, 20vw, 5.5rem);
+  /* ── Topo: logo e bloco do dia menores, relógio pela largura do celular ── */
+  .tv-p-topbar {
+    gap: 12px;
+    padding: 0;
   }
-  .tv-p-sec {
-    font-size: clamp(1.2rem, 6vw, 2rem);
+  .tv-p-time {
+    font-size: clamp(2.2rem, 11vw, 4.5rem) !important;
   }
-  .tv-p-date {
-    font-size: clamp(0.75rem, 3.5vw, 1.1rem);
+  .tv-p-top-logo {
+    width: clamp(44px, 12vw, 72px) !important;
+    height: clamp(44px, 12vw, 72px) !important;
+    border-radius: 14px;
   }
-
-  /* ── Header ── */
-  .tv-p-brand-name {
-    font-size: clamp(1.4rem, 7vw, 2.2rem);
+  .tv-p-day {
+    min-width: clamp(52px, 14vw, 80px) !important;
+    height: clamp(52px, 14vw, 80px) !important;
+    padding: 0 10px;
+    border-radius: 14px;
   }
-  .tv-p-brand-sub {
-    font-size: clamp(0.6rem, 2.5vw, 0.85rem);
-  }
-  .tv-p-logo {
-    width:  clamp(40px, 10vw, 60px);
-    height: clamp(40px, 10vw, 60px);
-  }
+  .tv-p-day b { font-size: clamp(1.4rem, 7vw, 2.4rem) !important; }
+  .tv-p-day small { font-size: clamp(0.55rem, 2.6vw, 0.75rem) !important; }
 
   /* ── Schedule: altura automática (com scroll se necessário) ── */
   .tv-p-schedule {
@@ -610,15 +613,6 @@ body {
     height: 100% !important;
     width: 100% !important;
   }
-
-  /* Ajusta as fontes pra não dependerem de vh (pois vh no cel em portrait é enorme) */
-  .tv-p-time { font-size: 50px !important; }
-  .tv-p-sec { font-size: 20px !important; }
-  .tv-p-date { font-size: 14px !important; }
-  
-  .tv-p-logo { width: 50px !important; height: 50px !important; }
-  .tv-p-brand-name { font-size: 24px !important; }
-  .tv-p-brand-sub { font-size: 12px !important; }
 }
 
 /* =========================================================
