@@ -1,4 +1,4 @@
-import { useState, useEffect, Component } from 'react'
+import { useState, useEffect, useRef, Component } from 'react'
 import { useClasses } from '../hooks/useClasses'
 import { useMedia } from '../hooks/useMedia'
 import { useTvLayout } from '../hooks/useTvLayout'
@@ -50,12 +50,25 @@ function getGBWeek() {
 }
 
 /* ── Topo: logo + relógio grande + bloco do dia (mesmo visual do header do ranking) ── */
-function TopBar({ w, h }) {
+function TopBar() {
   const [time, setTime] = useState(new Date())
+  const barRef = useRef(null)
+  const [{ w, h }, setSize] = useState({ w: 0, h: 0 })
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(interval)
+  }, [])
+
+  // Mede o tamanho real da área na tela (a TV nem sempre tem 1080 px de largura)
+  useEffect(() => {
+    const el = barRef.current
+    if (!el) return
+    const measure = () => setSize({ w: el.offsetWidth, h: el.offsetHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [])
 
   const hours   = String(time.getHours()).padStart(2, '0')
@@ -64,11 +77,12 @@ function TopBar({ w, h }) {
   const month   = time.toLocaleDateString('pt-BR', { month: 'long' })
 
   // Tudo escala com a área: logo e bloco do dia pela altura, relógio pelo espaço que sobra no meio
-  const side = Math.min(h * 0.62, 190)
-  const fs = Math.max(48, Math.min(h * 0.72, (w - 2 * side - 120) / 3.1))
+  const pad = w * 0.033
+  const side = Math.min(h * 0.62, w * 0.18)
+  const fs = Math.max(16, Math.min(h * 0.72, (w - 2 * side - 4 * pad) / 3.4))
 
   return (
-    <div className="tv-p-topbar">
+    <div ref={barRef} className="tv-p-topbar" style={{ gap: pad, padding: `0 ${pad}px`, visibility: w ? 'visible' : 'hidden' }}>
       <img src="/logo.jpg" alt="GB Marajoara" className="tv-p-top-logo" style={{ width: side, height: side }} />
 
       <div className="tv-p-time font-rajdhani" style={{ fontSize: fs }}>
@@ -143,7 +157,7 @@ export default function TvPage() {
 
       {/* ── Áreas 1 e 2: Cabeçalho + Relógio numa barra só, ocupando o espaço das duas ── */}
       <Widget className="tv-widget-top" pos={topArea}>
-        <TopBar w={topArea.w} h={topArea.h} />
+        <TopBar />
       </Widget>
 
       {/* ── Divisor entre relógio e grade ── */}

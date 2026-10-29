@@ -103,6 +103,7 @@ body {
   justify-content: center;
   gap: 0.06em;
   line-height: 1;
+  white-space: nowrap;
   color: #ffffff;
   font-weight: 700;
 }
@@ -223,8 +224,8 @@ body {
 
   /* ── Topo: logo e bloco do dia menores, relógio pela largura do celular ── */
   .tv-p-topbar {
-    gap: 12px;
-    padding: 0;
+    gap: 12px !important;
+    padding: 0 !important;
   }
   .tv-p-time {
     font-size: clamp(2.2rem, 11vw, 4.5rem) !important;
