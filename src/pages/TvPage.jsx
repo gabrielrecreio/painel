@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, Component } from 'react'
 import { useClasses } from '../hooks/useClasses'
 import { useMedia } from '../hooks/useMedia'
+import { useGraduados } from '../hooks/useGraduados'
 import { useTvLayout } from '../hooks/useTvLayout'
 import { useSettings } from '../hooks/useSettings'
 import { useRanking, useRankingCycle } from '../hooks/useRanking'
@@ -123,6 +124,7 @@ function Widget({ pos, className = '', children, style = {} }) {
 export default function TvPage() {
   const { classes, loading: classLoading } = useClasses()
   const { videos, banners } = useMedia()
+  const { graduados } = useGraduados()
   const layout = useTvLayout()
   const { settings } = useSettings()
   const bannerInterval = parseInt(settings.banner_interval, 10) || 5
@@ -144,10 +146,13 @@ export default function TvPage() {
     h: Math.max(layout.header.y + layout.header.h, layout.clock.y + layout.clock.h) - Math.min(layout.header.y, layout.clock.y),
   }
 
-  const activeBanners = banners.filter(banner => {
-    if (banner.semana) return banner.semana === currentWeek
-    return true
-  })
+  const activeBanners = [
+    ...banners.filter(banner => {
+      if (banner.semana) return banner.semana === currentWeek
+      return true
+    }),
+    ...graduados,
+  ]
 
   return (
     <ErrorBoundary>

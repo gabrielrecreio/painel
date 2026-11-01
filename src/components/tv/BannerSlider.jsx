@@ -1,5 +1,61 @@
 import { useState, useEffect, useRef } from 'react'
 
+// Coordenadas exatas da moldura branca na arte /graduados-bg.jpg (1024 × 564)
+const FRAME_LEFT = `${(634 / 1024) * 100}%`
+const FRAME_TOP = `${(69 / 564) * 100}%`
+const FRAME_WIDTH = `${(308 / 1024) * 100}%`
+const FRAME_HEIGHT = `${(434 / 564) * 100}%`
+
+function GraduadoSlide({ banner, active }) {
+  return (
+    <div
+      className="banner-slide absolute inset-0 w-full h-full flex items-center justify-center bg-black transition-opacity duration-700 select-none overflow-hidden"
+      style={{
+        opacity: active ? 1 : 0,
+        pointerEvents: active ? 'auto' : 'none',
+      }}
+    >
+      {/* Container proporcional à arte padrão (1024 × 564) para que a foto encaixe 100% na moldura */}
+      <div
+        className="relative max-w-full max-h-full"
+        style={{ aspectRatio: '1024 / 564', height: '100%' }}
+      >
+        {/* 1. Arte oficial de fundo ("GRADUADOS DA SEMANA - PARABÉNS A TODOS!") */}
+        <img
+          src="/graduados-bg.jpg"
+          alt="Graduados da Semana"
+          className="block w-full h-full object-contain pointer-events-none"
+        />
+
+        {/* 2. Foto vertical do graduado posicionada exatamente dentro do quadro branco */}
+        <div
+          className="absolute overflow-hidden bg-neutral-900"
+          style={{
+            left: FRAME_LEFT,
+            top: FRAME_TOP,
+            width: FRAME_WIDTH,
+            height: FRAME_HEIGHT,
+          }}
+        >
+          <img
+            src={banner.url}
+            alt={banner.name || 'Graduado da Semana'}
+            className="w-full h-full object-cover object-top"
+          />
+        </div>
+
+        {/* 3. Selo redondo da Gracie Barra sobreposto no canto superior direito da foto */}
+        <img
+          src="/graduados-badge.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight = false }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [visible, setVisible] = useState(true)
@@ -63,23 +119,29 @@ export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight 
         Renderiza TODOS os banners no DOM para que o navegador baixe apenas 1 vez e mantenha em cache,
         alterando apenas a opacidade do banner ativo. Isso zera o consumo repetitivo de banda.
       */}
-      {banners.map((banner, i) => (
-        <img
-          key={banner.id || i}
-          src={optimizeCloudinaryUrl(banner.url)}
-          alt={banner.name || 'Banner'}
-          className="banner-slide absolute inset-0 w-full h-full transition-opacity duration-700"
-          style={{
-            opacity: i === currentIndex && visible ? 1 : 0,
-            objectFit: 'contain',
-            pointerEvents: i === currentIndex ? 'auto' : 'none'
-          }}
-        />
-      ))}
+      {banners.map((banner, i) => {
+        const isActive = i === currentIndex && visible
+        if (banner.isGraduado) {
+          return <GraduadoSlide key={banner.id || i} banner={banner} active={isActive} />
+        }
+        return (
+          <img
+            key={banner.id || i}
+            src={optimizeCloudinaryUrl(banner.url)}
+            alt={banner.name || 'Banner'}
+            className="banner-slide absolute inset-0 w-full h-full transition-opacity duration-700"
+            style={{
+              opacity: isActive ? 1 : 0,
+              objectFit: 'contain',
+              pointerEvents: i === currentIndex ? 'auto' : 'none'
+            }}
+          />
+        )
+      })}
 
       {/* Dot indicators */}
       {banners.length > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
           {banners.map((_, i) => (
             <button
               key={i}
