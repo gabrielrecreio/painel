@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import CampeaoSlide from './CampeaoSlide'
 
 // Coordenadas exatas da moldura branca na arte /graduados-bg.jpg (1024 × 564)
 const FRAME_LEFT = `${(634 / 1024) * 100}%`
@@ -121,6 +122,9 @@ export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight 
       */}
       {banners.map((banner, i) => {
         const isActive = i === currentIndex && visible
+        if (banner.isCampeao) {
+          return <CampeaoSlide key={banner.id} banner={banner} active={isActive} />
+        }
         if (banner.isGraduado) {
           return <GraduadoSlide key={banner.id || i} banner={banner} active={isActive} />
         }

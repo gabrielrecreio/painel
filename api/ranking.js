@@ -14,8 +14,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GB_API_URL / GB_PANEL_KEY não configuradas' })
   }
 
+  // ?month=AAAA-MM busca outro mês (usado pelo banner de campeões do mês anterior)
+  const { month } = req.query || {}
+  const query = /^\d{4}-\d{2}$/.test(month || '') ? `?month=${month}` : ''
+
   try {
-    const upstream = await fetch(`${baseUrl.replace(/\/$/, '')}/api/public/ranking`, {
+    const upstream = await fetch(`${baseUrl.replace(/\/$/, '')}/api/public/ranking${query}`, {
       headers: { 'x-panel-key': panelKey },
     })
     const data = await upstream.json()

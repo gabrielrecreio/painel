@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { TV_REF_W, TV_REF_H } from '../../tvConstants'
 
 // Ordem e cor de destaque de cada bloco (ids vêm da API do GB Frequência)
-const GROUP_STYLES = {
+export const GROUP_STYLES = {
   juvenil: { accent: '#ffb300', emoji: '🔥' },
   kids:    { accent: '#29b6f6', emoji: '⭐' },
   adulto:  { accent: '#e53935', emoji: '🥋' },
@@ -20,13 +20,13 @@ const SCROLL_SPEED = 45 // px/s no canvas de 1080×1920
 const SCROLL_PAUSE = 0.15 // fração do ciclo parada no topo
 
 // "GreyWhite" / "YellowBlack" → cor base da faixa
-function beltColor(belt) {
+export function beltColor(belt) {
   if (!belt) return '#3a3a3a'
   const base = belt === 'White' || belt === 'Black' ? belt : belt.replace(/(White|Black)$/, '')
   return BELT_COLORS[base] || '#3a3a3a'
 }
 
-function initials(name) {
+export function initials(name) {
   const parts = name.split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
@@ -40,7 +40,7 @@ function daysLeftInMonth(month) {
   return lastDay - now.getDate()
 }
 
-function monthLabel(month) {
+export function monthLabel(month) {
   const [y, m] = (month || '').split('-').map(Number)
   if (!y || !m) return ''
   return new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long' })

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, Component } from 'react'
 import { useClasses } from '../hooks/useClasses'
 import { useMedia } from '../hooks/useMedia'
 import { useGraduados } from '../hooks/useGraduados'
+import { useCampeoes } from '../hooks/useCampeoes'
 import { useTvLayout } from '../hooks/useTvLayout'
 import { useSettings } from '../hooks/useSettings'
 import { useRanking, useRankingCycle } from '../hooks/useRanking'
@@ -125,6 +126,8 @@ export default function TvPage() {
   const { classes, loading: classLoading } = useClasses()
   const { videos, banners } = useMedia()
   const { graduados } = useGraduados()
+  // Campeões de presença do mês anterior (dias 1–7); /tv?campeoes=1 mostra em qualquer dia
+  const campeoes = useCampeoes(new URLSearchParams(window.location.search).get('campeoes') === '1')
   const layout = useTvLayout()
   const { settings } = useSettings()
   const bannerInterval = parseInt(settings.banner_interval, 10) || 5
@@ -147,6 +150,7 @@ export default function TvPage() {
   }
 
   const activeBanners = [
+    ...campeoes,
     ...banners.filter(banner => {
       if (banner.semana) return banner.semana === currentWeek
       return true
