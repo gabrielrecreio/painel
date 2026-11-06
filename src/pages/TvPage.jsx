@@ -205,7 +205,12 @@ export default function TvPage() {
 
       {/* ── Área 5: Banners ── */}
       <Widget className="tv-widget-banner" pos={layout.banner}>
-        <BannerSlider banners={activeBanners} intervalSeconds={bannerInterval} fillHeight />
+        <BannerSlider
+          banners={activeBanners}
+          intervalSeconds={bannerInterval}
+          fillHeight
+          paused={showRanking}
+        />
       </Widget>
 
     </div>

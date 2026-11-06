@@ -57,24 +57,32 @@ function GraduadoSlide({ banner, active }) {
   )
 }
 
-export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight = false }) {
+export default function BannerSlider({ banners, intervalSeconds = 5, fillHeight = false, paused = false }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [visible, setVisible] = useState(true)
   const timerRef = useRef(null)
+  const transitionTimeoutRef = useRef(null)
 
   useEffect(() => {
-    if (banners.length <= 1) return
+    if (banners.length <= 1 || paused) {
+      if (paused) setVisible(true)
+      return
+    }
+
     timerRef.current = setInterval(() => {
       // Fade out
       setVisible(false)
-      setTimeout(() => {
+      transitionTimeoutRef.current = setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % banners.length)
         setVisible(true)
       }, 700) // match CSS transition duration
     }, intervalSeconds * 1000)
 
-    return () => clearInterval(timerRef.current)
-  }, [banners, intervalSeconds])
+    return () => {
+      clearInterval(timerRef.current)
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current)
+    }
+  }, [banners, intervalSeconds, paused])
 
   // Reset index when banners change
   useEffect(() => {
